@@ -47,17 +47,17 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 
 	lastCol, _ := excelize.ColumnNumberToName(len(cols))
 
-	// Determine the range for header display (max 8 columns for responsiveness)
-	headerColCount := len(cols)
-	headerColCount = min(headerColCount, 8)
+	// Fixed width for header to ensure it's always readable (approx A4 width)
+	// regardless of whether data has few or many columns.
+	headerColCount := 8
 	headerLastCol, _ := excelize.ColumnNumberToName(headerColCount)
 
 	// ===== TOP HEADER (Row 1-3) =====
-	// Left Side: Company Info (Merge A-C if cols >= 5, else A-B)
-	// Right Side: Republic Info (Merge D-End if cols >= 5, else C-End)
-	// Assumming 5 cols: A,B,C,D,E. Left: A-C. Right: D-E.
+	// Left Side: Company Info (Merge A-C)
+	// Right Side: Republic Info (Merge D-H)
 
 	splitColIndex := 3
+	// Logic splitColIndex remains effective if we ever change headerColCount
 	if headerColCount < 5 {
 		splitColIndex = 2
 	}
@@ -105,7 +105,7 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 	f.SetRowHeight(sheet, 5, 30)
 
 	// ===== FREEZE PANE (From Row 7) =====
-	_ = configureFreezePane(f, sheet, 6) // Freeze top 6 rows
+	_ = configureFreezePane(f, sheet, 7) // Freeze top 6 rows
 
 	// ===== HEADER ROW (Row 7) =====
 	headerRowIndex := 7
