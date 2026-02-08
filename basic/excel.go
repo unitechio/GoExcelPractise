@@ -47,13 +47,18 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 
 	lastCol, _ := excelize.ColumnNumberToName(len(cols))
 
+	// Determine the range for header display (max 8 columns for responsiveness)
+	headerColCount := len(cols)
+	headerColCount = min(headerColCount, 8)
+	headerLastCol, _ := excelize.ColumnNumberToName(headerColCount)
+
 	// ===== TOP HEADER (Row 1-3) =====
 	// Left Side: Company Info (Merge A-C if cols >= 5, else A-B)
 	// Right Side: Republic Info (Merge D-End if cols >= 5, else C-End)
 	// Assumming 5 cols: A,B,C,D,E. Left: A-C. Right: D-E.
 
 	splitColIndex := 3
-	if len(cols) < 5 {
+	if headerColCount < 5 {
 		splitColIndex = 2
 	}
 	leftMergeTo, _ := excelize.ColumnNumberToName(splitColIndex)
@@ -64,7 +69,7 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 	f.SetCellValue(sheet, "A1", "CÔNG TY CỔ PHẦN GIAO THÔNG SỐ VIỆT NAM")
 	f.SetCellStyle(sheet, "A1", "A1", topBoldStyle)
 
-	f.MergeCell(sheet, rightMergeFrom+"1", lastCol+"1")
+	f.MergeCell(sheet, rightMergeFrom+"1", headerLastCol+"1")
 	f.SetCellValue(sheet, rightMergeFrom+"1", "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")
 	f.SetCellStyle(sheet, rightMergeFrom+"1", rightMergeFrom+"1", topBoldStyle)
 
@@ -75,7 +80,7 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 	f.SetCellValue(sheet, "A2", "PHÒNG KINH DOANH")
 	f.SetCellStyle(sheet, "A2", "A2", topBoldStyle)
 
-	f.MergeCell(sheet, rightMergeFrom+"2", lastCol+"2")
+	f.MergeCell(sheet, rightMergeFrom+"2", headerLastCol+"2")
 	f.SetCellValue(sheet, rightMergeFrom+"2", "Độc lập - Tự do - Hạnh phúc")
 	f.SetCellStyle(sheet, rightMergeFrom+"2", rightMergeFrom+"2", topBoldStyle)
 
@@ -86,7 +91,7 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 	f.SetCellValue(sheet, "A3", "Số: ...../ĐN") // Placeholder
 	f.SetCellStyle(sheet, "A3", "A3", topNormalStyle)
 
-	f.MergeCell(sheet, rightMergeFrom+"3", lastCol+"3")
+	f.MergeCell(sheet, rightMergeFrom+"3", headerLastCol+"3")
 	f.SetCellValue(sheet, rightMergeFrom+"3", fmt.Sprintf("Hà Nội, ngày %s tháng %s năm %s",
 		time.Now().Format("02"), time.Now().Format("01"), time.Now().Format("2006")))
 	f.SetCellStyle(sheet, rightMergeFrom+"3", rightMergeFrom+"3", topItalicStyle)
@@ -94,9 +99,9 @@ func CreateExcelStream(rows *sqlx.Rows, filePrefix string, reportTitle string) (
 	f.SetRowHeight(sheet, 3, 26)
 
 	// Row 5: REPORT TITLE
-	f.MergeCell(sheet, "A5", lastCol+"5")
+	f.MergeCell(sheet, "A5", headerLastCol+"5")
 	f.SetCellValue(sheet, "A5", reportTitle) // BÁO CÁO DANH SÁCH...
-	f.SetCellStyle(sheet, "A5", lastCol+"5", titleStyle)
+	f.SetCellStyle(sheet, "A5", headerLastCol+"5", titleStyle)
 	f.SetRowHeight(sheet, 5, 30)
 
 	// ===== FREEZE PANE (From Row 7) =====

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"excel_core/exporter"
+	"excel_core/basic"
 	"fmt"
 	"log"
 
@@ -26,7 +26,8 @@ func main() {
 		age INTEGER,
 		created_at DATETIME,
 		updated_at DATETIME,
-		deleted_at DATETIME
+		deleted_at DATETIME,
+		deleted_by string
 	);
 	`
 	db.MustExec(schema)
@@ -35,23 +36,24 @@ func main() {
 	tx := db.MustBegin()
 	for i := 1; i <= 5000; i++ {
 		tx.MustExec(
-			`INSERT INTO users (username, email, age, created_at, updated_at, deleted_at)
-			 VALUES (?, ?, ?, datetime('now'), datetime('now'), datetime('now'))`,
+			`INSERT INTO users (username, email, age, created_at, updated_at, deleted_at, deleted_by)
+			 VALUES (?, ?, ?, datetime('now'), datetime('now'), datetime('now'), ?)`,
 			fmt.Sprintf("user_%d", i),
 			fmt.Sprintf("user_%d@example.com", i),
 			20+i%10,
+			fmt.Sprintf("user_%d", i%100),
 		)
 	}
 	tx.Commit()
 
 	// 4. Query rows
-	rows, err := db.Queryx(`SELECT id, username, email, age, created_at, updated_at, deleted_at FROM users`)
+	rows, err := db.Queryx(`SELECT id, username, email, age, created_at, updated_at, deleted_at,deleted_by  FROM users`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// 5. Call Excel stream export
-	filePath, err := exporter.CreateExcelStream(rows, "user_report", "BÁO CÁO QUẢN LÝ NGƯỜI DÙNG")
+	filePath, err := basic.CreateExcelStream(rows, "user_report", "BÁO CÁO QUẢN LÝ NGƯỜI DÙNG")
 
 	if err != nil {
 		log.Fatal(err)
